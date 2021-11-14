@@ -23,4 +23,4 @@ Created an Event-Driven application that distributes the responsibility of stimu
 
 ## UML
 
-![uml](./images/uml.PNG)
+![uml](./images/uml.png)
