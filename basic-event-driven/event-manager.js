@@ -3,7 +3,7 @@
 const events = require('./event-pool');
 require('./events/vendor');
 require('./events/driver');
-let logger = require('./event-logger');
+let logger = require('../event-logger');
 
 // Listens to all events and Logs a timestamp and the payload of every event.
 events.on('pickup', pickupHandler);

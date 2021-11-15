@@ -8,28 +8,19 @@ let host = 'http://localhost:3030';
 const capsConnection = io.connect(`${host}/caps`);
 
 // join a room with the store name, and emit a pickup event:
+let pickupLoad = {
+    store: faker.company.companyName(),
+    orderID: faker.datatype.uuid(),
+    customer: faker.name.findName(),
+    address: faker.address.streetAddress()
+};
 
-
-
-
-// Emitting the pickup event:
-
-setInterval(() => {
-    let pickupLoad = {
-        store: faker.company.companyName(),
-        orderID: faker.datatype.uuid(),
-        customer: faker.name.findName(),
-        address: faker.address.streetAddress()
-    };
-
-    capsConnection.emit('joinRoom', pickupLoad.store);
-    // Listen for joining room:
-    capsConnection.on('joinedRoom', (payload) => {
-        console.log(payload);
-        capsConnection.emit('pickup', pickupLoad);
-    });
-}, 5000)
-
+capsConnection.emit('joinRoom', pickupLoad.store);
+// Listen for joining room:
+capsConnection.on('joinedRoom', (payload) => {
+    console.log(payload);
+    capsConnection.emit('pickup', pickupLoad);
+});
 
 // <-- Listening -->
 capsConnection.on('delivered', (payload) => {

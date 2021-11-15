@@ -1,7 +1,7 @@
 'use strict';
 
 const faker = require('faker');
-let events = require('../event-pool');
+let events = require('../basic-event-driven/event-pool');
 
 describe('events testing', () => {
     let consoleSpy; // global variable that will be used to keep an on any operation that is a console log

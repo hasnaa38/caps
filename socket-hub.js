@@ -22,7 +22,8 @@ caps.on('connection', (socket)=>{
 
     socket.on('pickup', payload => {
         logger('pickup', payload);
-        caps.emit('d-pickup', payload);
+        // emit to the driver socket
+        caps.emit('pickup', payload);
     });
 
     socket.on('in-transit', payload => {
@@ -31,6 +32,9 @@ caps.on('connection', (socket)=>{
 
     socket.on('delivered', payload => {
         logger('delivered', payload);
+        // emit to the vendor socket
         caps.emit('delivered', payload);
     });
 });
+
+module.exports = { caps };
