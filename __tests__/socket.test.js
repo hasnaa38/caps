@@ -19,6 +19,7 @@ describe('Testing Socket.io Event-Driven App', ()=>{
     afterEach(() => {
         consoleSpy.mockRestore();
     });
+    afterAll(() => setTimeout(() => process.exit(), 0));
 
     test('can establish a connection to the root of the socket server', async ()=>{
         const rootConnection = ioClient.connect(`${host}`);
