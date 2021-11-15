@@ -18,7 +18,10 @@
   },
   "homepage": "https://github.com/hasnaa38/caps#readme",
   "dependencies": {
-    "faker": "^5.5.3"
+    "dotenv": "^10.0.0",
+    "faker": "^5.5.3",
+    "socket.io": "^4.3.2",
+    "socket.io-client": "^4.3.2"
   },
   "devDependencies": {
     "jest": "^27.3.1",
