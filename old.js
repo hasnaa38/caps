@@ -4,7 +4,6 @@ require('dotenv').config();
 const port = process.env.PORT || 3000;
 const logger = require('./event-logger');
 const uuid = require('uuid').v4;
-const MsgQueue = require('./msgQueue');
 
 // creating the root namespace on the specified port 
 const io = require('socket.io')(port);
@@ -13,8 +12,12 @@ io.on('connection', (socket)=>{
 });
 
 // adding the message queue:
-let flowersQueue = new MsgQueue();
-let widgetsQueue = new MsgQueue();
+let msgQueue = {
+    flowersPickups: {},
+    widgetsPickups: {},
+    flowersDeliveries: {},
+    widgetsDeliveries: {}
+};
 
 // caps namespace:
 const caps = io.of('/caps');
@@ -23,14 +26,11 @@ caps.on('connection', (socket)=>{
     
     socket.on('pickup', payload => {
         logger('pickup', payload);
+        let queueKey = payload.store === '1-800-flowers' ? 'flowersPickups' : 'widgetsPickups';
         let msgID = uuid();
-        if(payload.store === '1-800-flowers'){
-            flowersQueue.ePickup(msgID, payload);
-        } else if(payload.store === 'acme-widgets'){
-            widgetsQueue.ePickup(msgID, payload);
-        }
+        msgQueue[queueKey][msgID] = payload;
         console.log('>> a pickup has been added to the queue');
-        caps.emit('pickup', {msgID:msgID, payload:payload});
+        caps.emit('pickup', {msgID:msgID, payload: msgQueue[queueKey][msgID]});
     });
 
     socket.on('in-transit', payload => {
@@ -39,42 +39,34 @@ caps.on('connection', (socket)=>{
 
     socket.on('delivered', payload => {
         logger('delivered', payload);
-        console.log('>> pickup was delivered, move it from pickups to deliveries');
-        if(payload.payload.store === '1-800-flowers'){
-            flowersQueue.dePick(payload);
-            flowersQueue.eDelivery(payload);
-        } else if(payload.payload.store === 'acme-widgets'){
-            widgetsQueue.dePick(payload);
-            widgetsQueue.eDelivery(payload);
-        }
+        let queueKey = payload.payload.store === '1-800-flowers' ? 'flowersPickups' : 'widgetsPickups';
+        delete msgQueue[queueKey][payload.msgID];
+        console.log('>> pickup was delivered, move it from pickups to deliveries')
+        queueKey = payload.payload.store === '1-800-flowers' ? 'flowersDeliveries' : 'widgetsDeliveries';
+        msgQueue[queueKey][payload.msgID] = payload.payload;
         caps.emit('delivered', payload);
     });
 
     socket.on('received', payload => {
         console.log('>> vendor thanked the driver, remove from deliveries');
-        if(payload.payload.store === '1-800-flowers'){
-            flowersQueue.deDelivery(payload);
-        } else if(payload.payload.store === 'acme-widgets'){
-            widgetsQueue.deDelivery(payload);
-        }
+        let queueKey = payload.payload.store === '1-800-flowers' ? 'flowersDeliveries' : 'widgetsDeliveries';
+        delete msgQueue[queueKey][payload.msgID];
     });
 
     socket.on('getAll', client => {
         if(client === 'driver'){
-            console.log('driver connected, send pickups queue');
-            Object.keys(flowersQueue.pickups).forEach(msgID => {
-                socket.emit('pickup', {msgID:msgID, payload: flowersQueue.pickups[msgID]});
+            Object.keys(msgQueue.flowersPickups).forEach(msgID => {
+                socket.emit('pickup', {msgID:msgID, payload: msgQueue.flowersPickups[msgID]});
             });
-            Object.keys(widgetsQueue.pickups).forEach(msgID => {
-                socket.emit('pickup', {msgID:msgID, payload: widgetsQueue.pickups[msgID]});
+            Object.keys(msgQueue.widgetsPickups).forEach(msgID => {
+                socket.emit('pickup', {msgID:msgID, payload: msgQueue.widgetsPickups[msgID]});
             });
         } else {
-            console.log('vendor connected, send deliveries queue');
-            Object.keys(flowersQueue.deliveries).forEach(msgID => {
-                socket.emit('delivered', {msgID:msgID, payload: flowersQueue.deliveries[msgID]});
+            Object.keys(msgQueue.flowersDeliveries).forEach(msgID => {
+                socket.emit('delivered', {msgID:msgID, payload: msgQueue.flowersDeliveries[msgID]});
             });
-            Object.keys(widgetsQueue.deliveries).forEach(msgID => {
-                socket.emit('delivered', {msgID:msgID, payload: widgetsQueue.deliveries[msgID]});
+            Object.keys(msgQueue.widgetsDeliveries).forEach(msgID => {
+                socket.emit('delivered', {msgID:msgID, payload: msgQueue.widgetsDeliveries[msgID]});
             });
         }
     })
