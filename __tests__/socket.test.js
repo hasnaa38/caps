@@ -1,4 +1,3 @@
-/*
 'use strict';
 const { caps } = require('../socket-hub');
 const ioClient = require('socket.io-client');
@@ -61,4 +60,3 @@ describe('Testing Socket.io Event-Driven App', ()=>{
         expect(consoleSpy).toHaveBeenCalled();
     });
 });
-*/
