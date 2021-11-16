@@ -57,3 +57,30 @@ The core functionality that has been built during phase 1 remains the same. The 
 ### UML
 
 ![uml](./images/uml12.png)
+
+## Phase 3
+
+In this phase, the code was refactored and a message queue was added to guarantee that payloads from events are delivered to any Client Module that is listening for specific events.
+
+The server `socket-hub.js` is going to have the same overall functionality, but since we have 2 stores, 2 new message queues were added for each. The queues are instances of the MsgQueue class defined in `msgQueue.js`. A msgQueue has 2 objects: pickups to log all the pickup requests coming from the vendor, and deliveries to log all the items delivered by driver.
+
+Drivers are subscribed to pickup queue so they get notified when there is a new package to deliver. When a driver delivers a package, it will be removed from the pickup queue and added to the delivered queue.
+Vendors are subscribed to the delivers queue, all packages that has been delivered are logged there. Vendor will be notified when a new package is added to the queue, then, a `received` event will be emitted to tell the system that the package can be removed from delivered queue now.
+
+`getAll` event is an event that will be fired each time a client has connected to the server to check if they have missed any logs while absent.
+
+### Results
+
+In this figure, 2 pickup events were processed, then the driver unconnected. When the driver reconnected, the `getAll` event was fired to receive all the undelivered pickup queue logs. The driver got the requests and processed them normally.
+
+![getAll](./images/getAll.PNG)
+
+### UMLs
+
+#### normal running
+
+![normal](./images/normal.png)
+
+#### driver app down
+
+![cut](./images/cut.png)
